@@ -179,14 +179,3 @@ For any queries, contact team members
 
 ## License
 MIT License
-"""
-
-# ============================================
-# FILE: requirements.txt
-# ============================================
-"""
-mysql-connector-python==8.2.0
-python-dotenv==1.0.0
-Pillow==10.1.0
-tkcalendar==1.6.1
-"""
