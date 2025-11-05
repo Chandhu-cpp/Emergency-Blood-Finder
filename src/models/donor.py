@@ -3,15 +3,25 @@ from src.config.database import db
 class Donor:
     
     @staticmethod
-    def create(user_id, name, blood_group, city_pincode, weight):
-        """Create new donor"""
+    def create(user_id, name, blood_group, city_pincode, weight, last_donation_date=None):
+        """Create new donor profile"""
         query = """
             INSERT INTO DONOR 
-            (user_id, name, blood_group, city_pincode, is_available, weight)
-            VALUES (%s, %s, %s, %s, TRUE, %s)
+            (user_id, name, blood_group, city_pincode, is_available, weight, last_donation_date)
+            VALUES (%s, %s, %s, %s, TRUE, %s, %s)
         """
-        params = (user_id, name, blood_group, city_pincode, weight)
-        return db.execute_query(query, params)
+        return db.execute_query(query, (user_id, name, blood_group, city_pincode, weight, last_donation_date))
+    
+    @staticmethod
+    def get_by_user_id(user_id):
+        """Check if donor profile exists for user"""
+        query = """
+            SELECT d.*, u.email, u.phone
+            FROM DONOR d
+            JOIN USER u ON d.user_id = u.user_id
+            WHERE d.user_id = %s
+        """
+        return db.fetch_one(query, (user_id,))
     
     @staticmethod
     def get_all():

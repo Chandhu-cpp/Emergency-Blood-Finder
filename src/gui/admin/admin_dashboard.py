@@ -1,3 +1,8 @@
+# ============================================
+# FILE: src/gui/admin/admin_dashboard.py
+# Complete Admin Dashboard with All Functionality
+# ============================================
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from src.models.user import User
@@ -123,6 +128,12 @@ class AdminDashboard:
         tree.heading('Reserved', text='Reserved')
         tree.heading('Status', text='Status')
         
+        tree.column('Hospital', width=300)
+        tree.column('Blood', width=100)
+        tree.column('Available', width=100)
+        tree.column('Reserved', width=100)
+        tree.column('Status', width=150)
+        
         for item in inventory:
             tree.insert('', 'end', values=(
                 item['hospital_name'],
@@ -197,55 +208,166 @@ class AdminDashboard:
             ))
     
     def add_user(self):
-        """Add new user"""
+        """Add new user - Admin only creates basic user account"""
         add_window = tk.Toplevel(self.window)
         add_window.title("Add New User")
-        add_window.geometry("400x350")
+        add_window.geometry("500x600")
+        add_window.resizable(False, False)
         
-        tk.Label(add_window, text="Add New User", font=('Arial', 14, 'bold')).pack(pady=10)
+        # Center window
+        add_window.update_idletasks()
+        width = add_window.winfo_width()
+        height = add_window.winfo_height()
+        x = (add_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (add_window.winfo_screenheight() // 2) - (height // 2)
+        add_window.geometry(f'{width}x{height}+{x}+{y}')
         
-        form_frame = tk.Frame(add_window, padx=20, pady=10)
-        form_frame.pack()
+        # Main container
+        main_container = tk.Frame(add_window)
+        main_container.pack(fill='both', expand=True)
         
-        tk.Label(form_frame, text="Name:").grid(row=0, column=0, sticky='w', pady=5)
-        name_entry = tk.Entry(form_frame, width=30)
-        name_entry.grid(row=0, column=1, pady=5)
+        # Header
+        header = tk.Frame(main_container, bg='#007bff', height=60)
+        header.pack(fill='x')
+        tk.Label(header, text="Add New User", font=('Arial', 16, 'bold'), 
+                bg='#007bff', fg='white').pack(pady=15)
         
-        tk.Label(form_frame, text="Email:").grid(row=1, column=0, sticky='w', pady=5)
-        email_entry = tk.Entry(form_frame, width=30)
-        email_entry.grid(row=1, column=1, pady=5)
+        # Info message
+        info_frame = tk.Frame(main_container, bg='#d1ecf1', padx=10, pady=10)
+        info_frame.pack(fill='x', padx=20, pady=(15, 0))
         
-        tk.Label(form_frame, text="Phone:").grid(row=2, column=0, sticky='w', pady=5)
-        phone_entry = tk.Entry(form_frame, width=30)
-        phone_entry.grid(row=2, column=1, pady=5)
+        tk.Label(
+            info_frame,
+            text="ℹ️ User will complete their profile on first login",
+            font=('Arial', 9),
+            bg='#d1ecf1',
+            fg='#0c5460'
+        ).pack()
         
-        tk.Label(form_frame, text="Role:").grid(row=3, column=0, sticky='w', pady=5)
+        # Form
+        form_frame = tk.Frame(main_container, padx=30, pady=20)
+        form_frame.pack(fill='both')
+        
+        row = 0
+        
+        # Name
+        tk.Label(form_frame, text="Full Name:", font=('Arial', 11, 'bold')).grid(row=row, column=0, sticky='w', pady=10)
+        name_entry = tk.Entry(form_frame, font=('Arial', 11), width=30)
+        name_entry.grid(row=row, column=1, pady=10, padx=(10, 0))
+        row += 1
+        
+        # Email
+        tk.Label(form_frame, text="Email:", font=('Arial', 11, 'bold')).grid(row=row, column=0, sticky='w', pady=10)
+        email_entry = tk.Entry(form_frame, font=('Arial', 11), width=30)
+        email_entry.grid(row=row, column=1, pady=10, padx=(10, 0))
+        row += 1
+        
+        # Phone
+        tk.Label(form_frame, text="Phone Number:", font=('Arial', 11, 'bold')).grid(row=row, column=0, sticky='w', pady=10)
+        phone_entry = tk.Entry(form_frame, font=('Arial', 11), width=30)
+        phone_entry.grid(row=row, column=1, pady=10, padx=(10, 0))
+        tk.Label(form_frame, text="(10 digits)", font=('Arial', 8), fg='gray').grid(row=row, column=1, sticky='e', padx=(10, 0))
+        row += 1
+        
+        # Role Selection
+        tk.Label(form_frame, text="User Role:", font=('Arial', 11, 'bold')).grid(row=row, column=0, sticky='nw', pady=10)
         role_var = tk.StringVar(value='patient')
-        role_combo = ttk.Combobox(form_frame, textvariable=role_var, 
-                                  values=['patient', 'donor', 'hospital_staff', 'admin'], 
-                                  state='readonly', width=27)
-        role_combo.grid(row=3, column=1, pady=5)
         
+        role_frame = tk.Frame(form_frame)
+        role_frame.grid(row=row, column=1, sticky='w', pady=10, padx=(10, 0))
+        
+        roles = [
+            ('Patient', 'patient'),
+            ('Donor', 'donor'),
+            ('Hospital Staff', 'hospital_staff'),
+            ('Admin', 'admin')
+        ]
+        
+        for text, value in roles:
+            tk.Radiobutton(
+                role_frame,
+                text=text,
+                variable=role_var,
+                value=value,
+                font=('Arial', 10)
+            ).pack(anchor='w')
+        
+        row += 1
+        
+        # Helper text
+        helper_frame = tk.Frame(form_frame, bg='#fff3cd', padx=8, pady=8)
+        helper_frame.grid(row=row, column=0, columnspan=2, pady=15, sticky='ew')
+        
+        helper_text = """📝 Note: 
+• Patients will add: Blood group, Address, Emergency contact
+• Donors will add: Blood group, Address, Weight, Last donation date"""
+        
+        tk.Label(helper_frame, text=helper_text, font=('Arial', 9), 
+                bg='#fff3cd', fg='#856404', justify='left').pack(anchor='w')
+        
+        # Save function
         def save_user():
             name = name_entry.get().strip()
             email = email_entry.get().strip()
             phone = phone_entry.get().strip()
             role = role_var.get()
             
+            # Validation
             if not all([name, email, phone]):
                 messagebox.showerror("Error", "All fields are required")
                 return
             
+            # Validate email
+            if '@' not in email or '.' not in email:
+                messagebox.showerror("Error", "Please enter a valid email address")
+                return
+            
+            # Validate phone
+            if len(phone) != 10 or not phone.isdigit():
+                messagebox.showerror("Error", "Please enter a valid 10-digit phone number")
+                return
+            
             try:
                 User.create(name, email, phone, role)
-                messagebox.showinfo("Success", "User created successfully")
+                messagebox.showinfo(
+                    "Success", 
+                    f"User '{name}' created successfully!\n\n"
+                    f"✅ They can now login with email: {email}\n"
+                    f"📝 They will complete their profile on first login"
+                )
                 self.load_users()
                 add_window.destroy()
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to create user: {str(e)}")
+                if "Duplicate entry" in str(e):
+                    messagebox.showerror("Error", "This email is already registered")
+                else:
+                    messagebox.showerror("Error", f"Failed to create user: {str(e)}")
         
-        tk.Button(add_window, text="Save User", bg='#28a745', fg='white', 
-                 command=save_user, width=15).pack(pady=20)
+        # Buttons at the bottom
+        btn_frame = tk.Frame(main_container, pady=20)
+        btn_frame.pack(side='bottom', fill='x')
+        
+        tk.Button(
+            btn_frame, 
+            text="Create User", 
+            bg='#28a745', 
+            fg='white',
+            font=('Arial', 12, 'bold'),
+            width=15,
+            height=2,
+            command=save_user
+        ).pack(side='left', padx=(100, 10))
+        
+        tk.Button(
+            btn_frame, 
+            text="Cancel", 
+            bg='#6c757d', 
+            fg='white',
+            font=('Arial', 12),
+            width=10,
+            height=2,
+            command=add_window.destroy
+        ).pack(side='left', padx=10)
     
     def delete_user(self):
         """Delete selected user"""
@@ -275,8 +397,17 @@ class AdminDashboard:
                  command=self.load_inventory).pack(pady=5)
         
         # Treeview
-        self.inv_tree = ttk.Treeview(frame, columns=('ID', 'Hospital', 'Blood', 'Available', 'Reserved', 'Threshold', 'Status', 'Updated'), 
+        tree_frame = tk.Frame(frame)
+        tree_frame.pack(fill='both', expand=True, pady=10)
+        
+        scrollbar = tk.Scrollbar(tree_frame)
+        scrollbar.pack(side='right', fill='y')
+        
+        self.inv_tree = ttk.Treeview(tree_frame, yscrollcommand=scrollbar.set,
+                                     columns=('ID', 'Hospital', 'Blood', 'Available', 'Reserved', 'Threshold', 'Status', 'Updated'), 
                                      show='headings')
+        
+        scrollbar.config(command=self.inv_tree.yview)
         
         self.inv_tree.heading('ID', text='Inv ID')
         self.inv_tree.heading('Hospital', text='Hospital')
@@ -287,7 +418,16 @@ class AdminDashboard:
         self.inv_tree.heading('Status', text='Status')
         self.inv_tree.heading('Updated', text='Last Updated')
         
-        self.inv_tree.pack(fill='both', expand=True, pady=10)
+        self.inv_tree.column('ID', width=70)
+        self.inv_tree.column('Hospital', width=200)
+        self.inv_tree.column('Blood', width=100)
+        self.inv_tree.column('Available', width=80)
+        self.inv_tree.column('Reserved', width=80)
+        self.inv_tree.column('Threshold', width=80)
+        self.inv_tree.column('Status', width=100)
+        self.inv_tree.column('Updated', width=150)
+        
+        self.inv_tree.pack(fill='both', expand=True)
         
         self.load_inventory()
     
@@ -318,8 +458,17 @@ class AdminDashboard:
                  command=self.load_requests).pack(pady=5)
         
         # Treeview
-        self.req_tree = ttk.Treeview(frame, columns=('ID', 'Patient', 'Blood', 'Urgency', 'Status', 'Units', 'Donor', 'Date'), 
+        tree_frame = tk.Frame(frame)
+        tree_frame.pack(fill='both', expand=True, pady=10)
+        
+        scrollbar = tk.Scrollbar(tree_frame)
+        scrollbar.pack(side='right', fill='y')
+        
+        self.req_tree = ttk.Treeview(tree_frame, yscrollcommand=scrollbar.set,
+                                     columns=('ID', 'Patient', 'Blood', 'Urgency', 'Status', 'Units', 'Donor', 'Date'), 
                                      show='headings')
+        
+        scrollbar.config(command=self.req_tree.yview)
         
         self.req_tree.heading('ID', text='Req ID')
         self.req_tree.heading('Patient', text='Patient')
@@ -330,7 +479,16 @@ class AdminDashboard:
         self.req_tree.heading('Donor', text='Matched Donor')
         self.req_tree.heading('Date', text='Request Date')
         
-        self.req_tree.pack(fill='both', expand=True, pady=10)
+        self.req_tree.column('ID', width=70)
+        self.req_tree.column('Patient', width=150)
+        self.req_tree.column('Blood', width=100)
+        self.req_tree.column('Urgency', width=80)
+        self.req_tree.column('Status', width=100)
+        self.req_tree.column('Units', width=70)
+        self.req_tree.column('Donor', width=150)
+        self.req_tree.column('Date', width=150)
+        
+        self.req_tree.pack(fill='both', expand=True)
         
         self.load_requests()
     

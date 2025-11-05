@@ -5,16 +5,28 @@ from tkcalendar import DateEntry
 from src.models.blood_request import BloodRequest
 from src.models.donor import Donor
 from src.models.hospital import Hospital
+from src.models.patient import Patient
 
 class PatientDashboard:
     def __init__(self, parent, user):
         self.parent = parent
         self.user = user
+        self.patient = None
+        
         self.window = tk.Toplevel()
         self.window.title(f"Patient Dashboard - {user['user_name']}")
         self.window.geometry("1200x700")
         
         self.center_window()
+        
+        # Load patient info first
+        if not self.load_patient_info():
+            # If patient profile doesn't exist, close dashboard
+            messagebox.showerror("Error", "Patient profile not found. Please contact admin.")
+            self.window.destroy()
+            self.parent.deiconify()
+            return
+        
         self.create_widgets()
         self.load_requests()
         
@@ -27,6 +39,18 @@ class PatientDashboard:
         x = (self.window.winfo_screenwidth() // 2) - (width // 2)
         y = (self.window.winfo_screenheight() // 2) - (height // 2)
         self.window.geometry(f'{width}x{height}+{x}+{y}')
+    
+    def load_patient_info(self):
+        """Load patient information - returns False if not found"""
+        try:
+            patient = Patient.get_by_user_id(self.user['user_id'])
+            if patient:
+                self.patient = patient
+                return True
+            return False
+        except Exception as e:
+            print(f"Error loading patient info: {e}")
+            return False
     
     def create_widgets(self):
         # Header
@@ -157,11 +181,14 @@ class PatientDashboard:
     
     def load_hospitals(self):
         """Load hospitals into combobox"""
-        hospitals = Hospital.get_all()
-        hospital_list = [f"{h['hospital_id']} - {h['hospital_name']}" for h in hospitals]
-        self.hospital_combo['values'] = hospital_list
-        if hospital_list:
-            self.hospital_combo.current(0)
+        try:
+            hospitals = Hospital.get_all()
+            hospital_list = [f"{h['hospital_id']} - {h['hospital_name']}" for h in hospitals]
+            self.hospital_combo['values'] = hospital_list
+            if hospital_list:
+                self.hospital_combo.current(0)
+        except Exception as e:
+            print(f"Error loading hospitals: {e}")
     
     def load_requests(self):
         """Load all blood requests for this patient"""
@@ -169,23 +196,30 @@ class PatientDashboard:
         for item in self.tree.get_children():
             self.tree.delete(item)
         
-        # Fetch requests
-        requests = BloodRequest.get_all()
-        
-        # Filter by current user
-        user_requests = [r for r in requests if r['patient_name'] == self.user['user_name']]
-        
-        for req in user_requests:
-            donor_name = req.get('donor_name', 'Not Matched')
-            self.tree.insert('', 'end', values=(
-                req['request_id'],
-                req['blood_group_needed'],
-                req['urgency'],
-                req['status'],
-                req['units_needed'],
-                req['request_date'].strftime('%Y-%m-%d %H:%M') if req['request_date'] else '',
-                donor_name
-            ))
+        try:
+            # Fetch requests
+            requests = BloodRequest.get_all()
+            
+            # Filter by current user
+            user_requests = [r for r in requests if r.get('patient_name') == self.user['user_name']]
+            
+            for req in user_requests:
+                donor_name = req.get('donor_name', 'Not Matched')
+                request_date = req.get('request_date')
+                date_str = request_date.strftime('%Y-%m-%d %H:%M') if request_date else 'N/A'
+                
+                self.tree.insert('', 'end', values=(
+                    req['request_id'],
+                    req['blood_group_needed'],
+                    req['urgency'],
+                    req['status'],
+                    req['units_needed'],
+                    date_str,
+                    donor_name
+                ))
+        except Exception as e:
+            print(f"Error loading requests: {e}")
+            messagebox.showerror("Error", f"Failed to load requests: {str(e)}")
     
     def create_request(self):
         """CREATE - Create new blood request"""
@@ -252,16 +286,16 @@ Urgency: {request['urgency']}
 Status: {request['status']}
 Units Needed: {request['units_needed']}
 Medical Reason: {request['medical_reason']}
-Hospital: {request['hospital_name']}
-Request Date: {request['request_date']}
-Required By: {request['required_by_date']}
+Hospital: {request.get('hospital_name', 'N/A')}
+Request Date: {request.get('request_date', 'N/A')}
+Required By: {request.get('required_by_date', 'N/A')}
         """
         
         if match:
             details += f"""
 \n--- Matched Donor ---
 Name: {match['name']}
-Phone: {match['phone']}
+Phone: {match.get('phone', 'N/A')}
 Blood Group: {match['blood_group']}
 Match Status: {match['match_status']}
             """
@@ -330,14 +364,16 @@ Match Status: {match['match_status']}
         tree.column('Last Donation', width=120)
         
         for donor in donors:
-            last_donation = donor['last_donation_date'].strftime('%Y-%m-%d') if donor['last_donation_date'] else 'Never'
+            last_donation = donor.get('last_donation_date')
+            last_donation_str = last_donation.strftime('%Y-%m-%d') if last_donation else 'Never'
+            
             tree.insert('', 'end', values=(
                 donor['donor_id'],
                 donor['name'],
                 donor['blood_group'],
-                donor['phone'],
+                donor.get('phone', 'N/A'),
                 donor['city_pincode'],
-                last_donation
+                last_donation_str
             ))
         
         tree.pack(fill='both', expand=True, padx=10, pady=10)
