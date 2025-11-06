@@ -93,13 +93,14 @@ class DonorMatch:
             SELECT 
                 dm.*,
                 d.name as donor_name,
-                d.phone as donor_phone,
+                u.phone as donor_phone,
                 br.blood_group_needed,
                 br.urgency,
                 br.units_needed,
                 p.name as patient_name
             FROM DONOR_MATCH dm
             JOIN DONOR d ON dm.donor_id = d.donor_id
+            JOIN USER u ON d.user_id = u.user_id
             JOIN BLOOD_REQUEST br ON dm.request_id = br.request_id
             JOIN PATIENT p ON br.user_id = p.user_id
             WHERE br.hospital_id = %s 

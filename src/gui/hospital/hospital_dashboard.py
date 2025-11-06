@@ -1,3 +1,4 @@
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
@@ -224,20 +225,37 @@ class HospitalDashboard:
             self.confirmed_tree.delete(item)
         
         try:
+            # Debug: Print hospital_id
+            print(f"DEBUG: Loading confirmed matches for hospital_id: {self.staff['hospital_id']}")
+            
             matches = DonorMatch.get_confirmed_by_hospital(self.staff['hospital_id'])
             
+            print(f"DEBUG: Found {len(matches)} confirmed matches")
+            
             for match in matches:
+                print(f"DEBUG: Match - {match}")
                 self.confirmed_tree.insert('', 'end', values=(
                     match['match_id'],
-                    match['donor_name'],
-                    match['patient_name'],
+                    match.get('donor_name', 'N/A'),
+                    match.get('patient_name', 'N/A'),
                     match['blood_group_needed'],
                     match['urgency'],
                     match['units_needed'],
                     match.get('donor_phone', 'N/A')
                 ))
+                
+            # Show count
+            count = len(matches)
+            if count == 0:
+                messagebox.showinfo("No Matches", "No confirmed matches found for your hospital.")
+            else:
+                print(f"Loaded {count} confirmed matches")
+                
         except Exception as e:
             print(f"Error loading confirmed matches: {e}")
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("Error", f"Failed to load confirmed matches: {str(e)}")
     
     def load_scheduled(self):
         """Load scheduled donations"""
@@ -412,3 +430,4 @@ class HospitalDashboard:
     def on_closing(self):
         self.window.destroy()
         self.parent.deiconify()
+

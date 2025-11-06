@@ -1,4 +1,3 @@
-
 from src.config.database import db
 
 class DonationRecord:
