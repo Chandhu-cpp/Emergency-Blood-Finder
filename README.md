@@ -96,7 +96,7 @@ python run.py
 1. **Patient:** Create blood requests, view status, search donors
 2. **Donor:** Update availability, view donation history
 3. **Admin:** User management, view statistics, manage inventory
-4. **Hospital Staff:** (Coming soon)
+4. **Hospital Staff:** Views donation requests and schedules the donation
 
 ---
 
