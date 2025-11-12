@@ -41,3 +41,4 @@ class DonationRecord:
         """Update donation status"""
         query = "UPDATE DONATION_RECORD SET status = %s WHERE donation_id = %s"
         db.execute_query(query, (new_status, donation_id))
+        
